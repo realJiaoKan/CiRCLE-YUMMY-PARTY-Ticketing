@@ -1,0 +1,16 @@
+{
+  "smtp": {
+    "host": "smtp.mail.me.com",
+    "port": 587,
+    "username": "",
+    "password": "",
+    "use_starttls": true,
+    "use_ssl": false
+  },
+  "email": {
+    "from": "Ticketing@example.com",
+    "from_name": "Your Event Name",
+    "subject": "Your Ticket",
+    "cc": "TicketingPingBack@example.com"
+  }
+}

@@ -1,0 +1,345 @@
+:root {
+  --bg0: #05070f;
+  --bg1: #0b1020;
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.68);
+  --line: rgba(255, 255, 255, 0.12);
+
+  --glass: rgba(15, 20, 40, 0.42);
+  --glass2: rgba(255, 255, 255, 0.06);
+
+  --pass: #22c55e;
+  --already: #f59e0b;
+  --fail: #ef4444;
+
+  --logo-size: 120px;
+  --logo-half: calc(var(--logo-size) / 2);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+    Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    sans-serif;
+  background-color: var(--bg0);
+  color: var(--text);
+  min-height: 100vh;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("./img/background.webp");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(900px 600px at 80% 20%, rgba(245, 158, 11, 0.16), transparent 75%),
+    radial-gradient(900px 600px at 20% 75%, rgba(34, 197, 94, 0.12), transparent 75%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.32));
+}
+
+.app {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  /* Prevent the "half-outside" logo from being clipped at the top on small viewports. */
+  padding: calc(22px + var(--logo-half)) 16px 36px;
+}
+
+.glass {
+  width: min(980px, 100%);
+  position: relative;
+  background: linear-gradient(180deg, var(--glass), rgba(10, 12, 22, 0.25));
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  /* Reserve space so the logo can "stick out" upward by 50%. */
+  padding: calc(var(--logo-half) + 24px) 18px 18px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.top {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 0 8px 12px;
+  gap: 8px;
+}
+
+.logo {
+  width: var(--logo-size);
+  height: var(--logo-size);
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  padding: 2px;
+}
+
+.title {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: 0.6px;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 8px 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.btn {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 11px 16px;
+  cursor: pointer;
+  transition: transform 0.06s ease, background 0.2s ease;
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.18), rgba(34, 197, 94, 0.08));
+  border-color: rgba(34, 197, 94, 0.32);
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.btn-small {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding: 8px;
+}
+
+.videoWrap {
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+video {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.side {
+  display: grid;
+  gap: 10px;
+}
+
+.stateCard {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+  padding: 14px 14px 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.state-clickable {
+  cursor: pointer;
+}
+
+.state-clickable:hover {
+  border-color: rgba(245, 158, 11, 0.62);
+}
+
+.stateCard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(800px 240px at 20% 0%, rgba(255, 255, 255, 0.10), transparent 55%);
+  pointer-events: none;
+}
+
+.stateLabel {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.stateValue {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin-top: 6px;
+}
+
+.stateMeta {
+  margin-top: 8px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.state-idle .stateValue {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.state-scanning .stateValue {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.state-verifying .stateValue {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.state-pass {
+  border-color: rgba(34, 197, 94, 0.42);
+}
+
+.state-pass .stateValue {
+  color: var(--pass);
+}
+
+.state-already {
+  border-color: rgba(245, 158, 11, 0.42);
+}
+
+.state-already .stateValue {
+  color: var(--already);
+}
+
+.state-fail {
+  border-color: rgba(239, 68, 68, 0.46);
+}
+
+.state-fail .stateValue {
+  color: var(--fail);
+}
+
+.info {
+  margin-top: 4px;
+  padding: 10px 8px 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: grid;
+  gap: 10px;
+}
+
+.infoRow {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.k {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.v {
+  font-size: 16px;
+  word-break: break-word;
+}
+
+.raw {
+  margin-top: 10px;
+  padding: 0 8px;
+}
+
+.raw summary {
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.84);
+}
+
+pre {
+  background: rgba(0, 0, 0, 0.20);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 14px;
+  padding: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow: auto;
+}
+
+.foot {
+  margin-top: 14px;
+  padding: 10px 8px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.footRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+@media (min-width: 880px) {
+  .stage {
+    grid-template-columns: 1.35fr 0.65fr;
+    align-items: start;
+  }
+
+  .glass {
+    padding: calc(var(--logo-half) + 32px) 22px 22px;
+  }
+}
