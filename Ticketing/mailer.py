@@ -29,16 +29,9 @@ def send_ticket_email(*, to_email: str, ticket_path: Path, name: str, ticket_no:
     if email_cc:
         msg["Cc"] = email_cc
 
-    html = f"""\
-<!doctype html>
-<html>
-  <body style="font-family: Arial, sans-serif;">
-    <p>Hi {name},</p>
-    <p>Your ticket is attached. Please keep it safe.</p>
-    <p style="color:#666;">Ticket No: {ticket_no}</p>
-  </body>
-</html>
-"""
+    template_path = BASE_DIR / "Ticketing" / "mail.html"
+    html = template_path.read_text(encoding="utf-8")
+    html = html.replace("{name}", name).replace("{ticket_no}", ticket_no)
     msg.set_content(
         f"Hi {name},\n\nYour ticket is attached.\n\nTicket No: {ticket_no}\n"
     )

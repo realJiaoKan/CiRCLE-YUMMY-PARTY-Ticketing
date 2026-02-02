@@ -1,7 +1,7 @@
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-SEND_EMAIL = False
+SEND_EMAIL = True
 
 # Template
 TEMPLATE_PATH = BASE_DIR / "Ticketing" / "Assets" / "template.png"
