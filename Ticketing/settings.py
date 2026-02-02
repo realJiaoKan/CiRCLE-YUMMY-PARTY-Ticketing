@@ -5,10 +5,13 @@ SEND_EMAIL = False
 
 # Template
 TEMPLATE_PATH = BASE_DIR / "Ticketing" / "Assets" / "template.png"
-TICKETS_DIR = BASE_DIR / "Ticketing" / "Tickets"
 
-# Data
+# File paths
+TICKETS_DIR = BASE_DIR / "Ticketing" / "Tickets"
 PRIVATE_KEY_PATH = BASE_DIR / "Ticketing" / "private.key"
+SCHEMA_SQL_PATH = BASE_DIR / "Ticketing" / "schema.mysql.sql"
+
+# Ticket settings
 NO_PREFIX = "CYP"
 
 # Ticket info box

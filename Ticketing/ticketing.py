@@ -1,11 +1,10 @@
 import re
-import base64
 from PIL import Image, ImageDraw, ImageFont
 import qrcode
 
 from sign import sign
 from mailer import send_ticket_email
-from userdata_store import append_ticket, get_next_ticket_no
+from database import create_ticket
 
 from settings import *
 
@@ -45,17 +44,18 @@ def generate_ticket(name, email):
     if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
         raise ValueError(f"Invalid email format: {email}")
 
-    ticket_no = get_next_ticket_no(prefix=NO_PREFIX)
-
-    # QR payload: "<ticket_no>,<sig_b64url>"
-    message = ticket_no.encode("utf-8")
-    signature = (
-        base64.urlsafe_b64encode(
-            sign(private_key_path=PRIVATE_KEY_PATH, message=message)
-        )
-        .decode("ascii")
-        .rstrip("=")
+    created = create_ticket(
+        name=name,
+        email=email,
+        signer=lambda ticket_no: sign(
+            private_key_path=PRIVATE_KEY_PATH,
+            message=ticket_no.encode("utf-8"),
+            b64url=True,
+        ),
+        checked="0",
     )
+    ticket_no = created["ticket_no"]
+    signature = created["sig_b64"]
     qr_payload = f"{ticket_no},{signature}"
     qr_img = make_qr(qr_payload).resize((QR_SIZE, QR_SIZE), Image.Resampling.NEAREST)
 
@@ -129,8 +129,6 @@ def generate_ticket(name, email):
     TICKETS_DIR.mkdir(parents=True, exist_ok=True)
     ticket_path = TICKETS_DIR / f"{ticket_no}.png"
     canvas.save(ticket_path, format="PNG")
-
-    append_ticket(no=ticket_no, name=name, email=email, sig_b64=signature, checked="0")
 
     if SEND_EMAIL:
         send_ticket_email(

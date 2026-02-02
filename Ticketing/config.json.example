@@ -1,6 +1,6 @@
 {
   "smtp": {
-    "host": "smtp.mail.me.com",
+    "host": "smtp.example.com",
     "port": 587,
     "username": "",
     "password": "",
@@ -12,5 +12,14 @@
     "from_name": "Your Event Name",
     "subject": "Your Ticket",
     "cc": "TicketingPingBack@example.com"
+  },
+  "mysql": {
+    "host": "127.0.0.1",
+    "port": 3306,
+    "username": "root",
+    "password": "",
+    "database": "your_event_name",
+    "ticket_no_prefix": "CYP",
+    "ticket_no_length": 3
   }
 }

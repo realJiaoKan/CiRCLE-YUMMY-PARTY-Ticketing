@@ -1,4 +1,5 @@
 import subprocess
+import base64
 
 from settings import BASE_DIR
 
@@ -68,9 +69,12 @@ def generate_keypair(*, private_key_path, public_key_path):
     _run_openssl(
         [
             "genpkey",
-            "-algorithm EC",
-            "-pkeyopt ec_paramgen_curve:P-256",
-            "-pkeyopt ec_param_enc:named_curve",
+            "-algorithm",
+            "EC",
+            "-pkeyopt",
+            "ec_paramgen_curve:P-256",
+            "-pkeyopt",
+            "ec_param_enc:named_curve",
             "-out",
             str(private_key_path),
         ]
@@ -80,11 +84,14 @@ def generate_keypair(*, private_key_path, public_key_path):
     )
 
 
-def sign(*, private_key_path, message: bytes) -> bytes:
+def sign(*, private_key_path, message: bytes, b64url: bool = False):
     sig_der = _run_openssl(
         ["dgst", "-sha256", "-sign", str(private_key_path)], input_bytes=message
     )
-    return _ecdsa_der_to_raw_p256(sig_der)
+    sig_raw = _ecdsa_der_to_raw_p256(sig_der)
+    if b64url:
+        return base64.urlsafe_b64encode(sig_raw).decode("ascii").rstrip("=")
+    return sig_raw
 
 
 if __name__ == "__main__":

@@ -1,0 +1,17 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Web module MySQL config (server-side).
+ *
+ * Usage:
+ * 1) Copy to `Web/config.local.php` and fill in.
+ */
+
+return [
+  'host' => '127.0.0.1',
+  'port' => 3306,
+  'username' => 'root',
+  'password' => '',
+  'database' => 'your_event_name',
+];
