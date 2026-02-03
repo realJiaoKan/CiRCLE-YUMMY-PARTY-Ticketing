@@ -163,6 +163,66 @@ body::after {
   font-size: 13px;
 }
 
+.form {
+  padding: 6px 8px 0;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.input {
+  appearance: none;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 16px;
+  outline: none;
+}
+
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover,
+.input:-webkit-autofill:focus,
+.input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--text);
+  caret-color: var(--text);
+  transition: background-color 9999s ease-out 0s;
+  box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.22) inset;
+}
+
+.input:autofill {
+  caret-color: var(--text);
+  box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.22) inset;
+}
+
+.input::placeholder {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.input:focus {
+  border-color: rgba(34, 197, 94, 0.42);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+}
+
+.alert {
+  margin: 6px 8px 0;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.alert-error {
+  border-color: rgba(239, 68, 68, 0.46);
+  background: rgba(239, 68, 68, 0.12);
+}
+
 .stage {
   display: grid;
   grid-template-columns: 1fr;

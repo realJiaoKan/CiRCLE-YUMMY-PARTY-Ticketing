@@ -66,6 +66,16 @@ def ensure_database():
                 SELECT COUNT(*)
                 FROM information_schema.tables
                 WHERE table_schema = DATABASE()
+                  AND table_name = 'checkers'
+                """
+            )
+            (checkers_exists,) = cur.fetchone() or (0,)
+
+            cur.execute(
+                """
+                SELECT COUNT(*)
+                FROM information_schema.tables
+                WHERE table_schema = DATABASE()
                   AND table_name = 'tickets'
                 """
             )
@@ -82,6 +92,37 @@ def ensure_database():
                 )
                 (cols,) = cur.fetchone() or (0,)
                 if int(cols) == 5:
+                    if int(checkers_exists) == 1:
+                        cur.execute(
+                            """
+                            SELECT COUNT(*)
+                            FROM information_schema.columns
+                            WHERE table_schema = DATABASE()
+                              AND table_name = 'checkers'
+                              AND column_name IN ('checker_id', 'code')
+                            """
+                        )
+                        (checker_cols,) = cur.fetchone() or (0,)
+                        if int(checker_cols) == 2:
+                            return
+                        raise RuntimeError(
+                            "Detected existing `checkers` table with incompatible schema. "
+                            "Please migrate/drop it and re-apply Ticketing/schema.mysql.sql."
+                        )
+
+                    cur.execute(
+                        """
+                        CREATE TABLE
+                          IF NOT EXISTS checkers (
+                            checker_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                            note VARCHAR(255) NULL,
+                            code VARCHAR(255) NOT NULL,
+                            UNIQUE KEY uniq_code (code),
+                            KEY idx_code (code)
+                          ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci
+                        """
+                    )
+                    conn.commit()
                     return
                 raise RuntimeError(
                     "Detected existing `tickets` table with incompatible schema. "
@@ -128,6 +169,27 @@ def create_ticket(*, name: str, email: str, signer, checked: str = "0"):
                 )
             conn.commit()
             return {"ticket_no": ticket_no, "sig_b64": sig_b64}
+        except Exception:
+            conn.rollback()
+            raise
+
+
+def insert_checker_code(*, code: str, note=None) -> bool:
+    ensure_database()
+    code = str(code).strip()
+    if not code:
+        raise ValueError("Missing checker code")
+    note = None if note is None else str(note).strip() or None
+    with _connect_db() as conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT IGNORE INTO checkers(code, note) VALUES (%s, %s)",
+                    (code, note),
+                )
+                inserted = cur.rowcount > 0
+            conn.commit()
+            return inserted
         except Exception:
             conn.rollback()
             raise

@@ -1,5 +1,8 @@
 <?php
 declare(strict_types=1);
+
+require_once __DIR__ . '/lib/auth.php';
+checker_require_page_auth();
 ?>
 <!doctype html>
 <html lang="zh-CN">
@@ -69,6 +72,7 @@ declare(strict_types=1);
       <footer class="foot">
         <div class="footRow">
           <button id="resetAllBtn" class="btn btn-small btn-ghost" type="button">一键重置全部未入场</button>
+          <a class="btn btn-small btn-ghost" href="./logout.php">退出登录</a>
           <span class="muted">已入场：<span id="checkedCount">0</span></span>
         </div>
       </footer>

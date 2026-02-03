@@ -64,9 +64,23 @@ function confirmAction(message) {
   return window.confirm(message);
 }
 
+function redirectToLogin() {
+  const next = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
+  window.location.href = `./login.php?next=${next}`;
+}
+
+function handleUnauthorized(resp) {
+  if (resp?.status === 401) {
+    redirectToLogin();
+    return true;
+  }
+  return false;
+}
+
 async function refreshServerStats() {
   try {
     const resp = await fetch("./api/stats.php", { cache: "no-store" });
+    if (handleUnauthorized(resp)) return;
     const data = await resp.json().catch(() => ({}));
     if (resp.ok && data?.ok === true) {
       const n = data?.stats?.checked_count;
@@ -88,6 +102,7 @@ async function resetAllChecked() {
       body: "{}",
       cache: "no-store",
     });
+    if (handleUnauthorized(resp)) return;
     const data = await resp.json().catch(() => ({}));
     if (!resp.ok || data?.ok !== true) throw new Error(String(data?.message ?? `API error (${resp.status})`));
     const n = data?.stats?.checked_count;
@@ -124,6 +139,7 @@ async function uncheckTicket(no) {
       body: JSON.stringify({ no }),
       cache: "no-store",
     });
+    if (handleUnauthorized(resp)) return;
     const data = await resp.json().catch(() => ({}));
     if (!resp.ok || data?.ok !== true) throw new Error(String(data?.message ?? `API error (${resp.status})`));
     const n = data?.stats?.checked_count;
@@ -255,6 +271,7 @@ async function handleDetected(rawValue) {
       body: JSON.stringify({ raw: rawValue }),
       cache: "no-store",
     });
+    if (handleUnauthorized(resp)) return;
     const data = await resp.json().catch(() => ({}));
     if (!resp.ok || data?.ok !== true) throw new Error(String(data?.message ?? `API error (${resp.status})`));
 

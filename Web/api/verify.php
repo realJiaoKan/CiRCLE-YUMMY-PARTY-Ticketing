@@ -2,9 +2,12 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../lib/http.php';
+require_once __DIR__ . '/../lib/auth.php';
 require_once __DIR__ . '/../lib/userdata_store.php';
 require_once __DIR__ . '/../lib/qr_payload.php';
 require_once __DIR__ . '/../lib/crypto_verify.php';
+
+checker_require_api_auth();
 
 $body = read_json_body();
 $raw = isset($body['raw']) ? (string) $body['raw'] : '';
