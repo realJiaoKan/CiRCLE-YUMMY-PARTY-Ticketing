@@ -10,11 +10,6 @@ if (isset($_POST['next']))
   $next = (string) $_POST['next'];
 $next = checker_sanitize_next($next);
 
-if (checker_is_authenticated()) {
-  header('location: ' . $next);
-  exit;
-}
-
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $code = isset($_POST['code']) ? (string) $_POST['code'] : '';
@@ -23,10 +18,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!($ret['ok'] ?? false)) {
       $error = (string) ($ret['message'] ?? '密码不正确');
     } else {
-      checker_session_start();
-      session_regenerate_id(true);
-      $_SESSION['checker_code'] = (string) ($ret['code'] ?? '');
-      header('location: ' . $next);
+      $issued = checker_issue_login_token((string) ($ret['code'] ?? ''));
+      $token = isset($issued['token']) ? (string) $issued['token'] : '';
+      if (trim($token) === '')
+        throw new RuntimeException('登录 token 生成失败');
+
+      header('location: ' . checker_append_token_to_next($next, $token));
       exit;
     }
   } catch (Throwable $e) {

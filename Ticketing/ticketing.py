@@ -40,9 +40,17 @@ def centered_text_y(draw, y_line_top, line_h, text, font):
     return int(y_pixels_top - bbox[1])
 
 
-def generate_ticket(name, email):
+def generate_ticket(name, email, table_no):
     if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
         raise ValueError(f"Invalid email format: {email}")
+
+    table_no_raw = str(table_no).strip()
+    if not table_no_raw.isdigit():
+        raise ValueError(f"Invalid table number: {table_no}")
+    table_no_int = int(table_no_raw)
+    if not (0 <= table_no_int <= 99):
+        raise ValueError(f"Invalid table number (must be 0-99): {table_no}")
+    table_no_text = f"{table_no_int:02d}"
 
     created = create_ticket(
         name=name,
@@ -68,63 +76,48 @@ def generate_ticket(name, email):
     value_font = ImageFont.truetype(str(INFO_VALUE_FONT_PATH), INFO_VALUE_FONT_SIZE)
     no_font = ImageFont.truetype(str(INFO_NO_FONT_PATH), INFO_LABEL_FONT_SIZE)
 
-    # Truncate value if too long
-    label1, value1 = "名前：", name
-    label1_w = int(draw.textlength(label1, font=label_font))
-    label2, value2 = "番号：", ticket_no
-    label2_w = int(draw.textlength(label2, font=label_font))
-    label_w = max(label1_w, label2_w)
+    # Truncate values if too long
+    rows = [
+        ("名前：", name, value_font),
+        ("番号：", ticket_no, no_font),
+        ("卓番：", table_no_text, no_font),
+    ]
+    label_w = max(int(draw.textlength(label, font=label_font)) for label, _, _ in rows)
     value_x = TICKET_INFO_X + label_w
     max_value_width = (QR_X - 20) - value_x
-    value1 = truncate_long_text(
-        draw=draw, text=value1, font=value_font, max_width=max_value_width
-    )
-    value2 = truncate_long_text(
-        draw=draw, text=value2, font=no_font, max_width=max_value_width
-    )
 
-    line1_label_bbox = draw.textbbox((0, 0), label1, font=label_font)
-    line1_value_bbox = draw.textbbox((0, 0), value1, font=value_font)
-    line1_label_h = line1_label_bbox[3] - line1_label_bbox[1]
-    line1_value_h = line1_value_bbox[3] - line1_value_bbox[1]
-    line1_h = max(line1_label_h, line1_value_h)
+    rows = [
+        (label, truncate_long_text(draw, value, font, max_value_width), font)
+        for label, value, font in rows
+    ]
 
-    line2_label_bbox = draw.textbbox((0, 0), label2, font=label_font)
-    line2_value_bbox = draw.textbbox((0, 0), value2, font=no_font)
-    line2_label_h = line2_label_bbox[3] - line2_label_bbox[1]
-    line2_value_h = line2_value_bbox[3] - line2_value_bbox[1]
-    line2_h = max(line2_label_h, line2_value_h)
+    row_heights = []
+    for label, value, font in rows:
+        label_bbox = draw.textbbox((0, 0), label, font=label_font)
+        value_bbox = draw.textbbox((0, 0), value, font=font)
+        label_h = label_bbox[3] - label_bbox[1]
+        value_h = value_bbox[3] - value_bbox[1]
+        row_heights.append(max(label_h, value_h))
 
-    total_h = line1_h + INFO_LINE_GAP + line2_h
+    total_h = sum(row_heights) + INFO_LINE_GAP * (len(rows) - 1)
     start_y = TICKET_INFO_Y + (TICKET_INFO_HEIGHT - total_h) // 2
     x = TICKET_INFO_X
 
-    y1 = start_y
-    draw.text(
-        (x, centered_text_y(draw, y1, line1_h, label1, label_font)),
-        label1,
-        fill="black",
-        font=label_font,
-    )
-    draw.text(
-        (value_x, centered_text_y(draw, y1, line1_h, value1, value_font)),
-        value1,
-        fill="black",
-        font=value_font,
-    )
-    y2 = start_y + line1_h + INFO_LINE_GAP
-    draw.text(
-        (x, centered_text_y(draw, y2, line2_h, label2, label_font)),
-        label2,
-        fill="black",
-        font=label_font,
-    )
-    draw.text(
-        (value_x, centered_text_y(draw, y2, line2_h, value2, no_font)),
-        value2,
-        fill="black",
-        font=no_font,
-    )
+    y = start_y
+    for (label, value, font), row_h in zip(rows, row_heights):
+        draw.text(
+            (x, centered_text_y(draw, y, row_h, label, label_font)),
+            label,
+            fill="black",
+            font=label_font,
+        )
+        draw.text(
+            (value_x, centered_text_y(draw, y, row_h, value, font)),
+            value,
+            fill="black",
+            font=font,
+        )
+        y += row_h + INFO_LINE_GAP
 
     TICKETS_DIR.mkdir(parents=True, exist_ok=True)
     ticket_path = TICKETS_DIR / f"{ticket_no}.png"
@@ -139,4 +132,4 @@ def generate_ticket(name, email):
 
 
 if __name__ == "__main__":
-    print(generate_ticket(name="Test User", email="realJiaoKan@gmail.com"))
+    print(generate_ticket(name="Test User", email="realJiaoKan@gmail.com", table_no=1))

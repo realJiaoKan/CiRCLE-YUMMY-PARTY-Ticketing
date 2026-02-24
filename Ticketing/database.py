@@ -144,6 +144,7 @@ def clear_userdata_db() -> None:
     with _connect_db() as conn:
         with conn.cursor() as cur:
             cur.execute("TRUNCATE TABLE tickets")
+            cur.execute("TRUNCATE TABLE checkers")
         conn.commit()
 
 

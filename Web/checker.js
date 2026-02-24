@@ -27,6 +27,8 @@ let lastScanAt = 0;
 
 const SCAN_INTERVAL_MS = 120;
 const SCAN_MAX_WIDTH = 720;
+const UPLOAD_MAX_WIDTH = 2200;
+const API_TOKEN = typeof window.CHECKER_API_TOKEN === "string" ? window.CHECKER_API_TOKEN.trim() : "";
 
 function setStatus(text) {
   // Some layouts don't include a dedicated status node; fall back to meta line.
@@ -64,8 +66,28 @@ function confirmAction(message) {
   return window.confirm(message);
 }
 
+function getPathWithoutToken() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("token");
+  const query = url.searchParams.toString();
+  return `${url.pathname}${query ? `?${query}` : ""}`;
+}
+
+function clearTokenInAddressBar() {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("token")) return;
+  url.searchParams.delete("token");
+  const query = url.searchParams.toString();
+  const clean = `${url.pathname}${query ? `?${query}` : ""}${url.hash || ""}`;
+  window.history.replaceState({}, document.title, clean);
+}
+
+function authHeaders(extra = {}) {
+  return { ...extra, "x-checker-token": API_TOKEN };
+}
+
 function redirectToLogin() {
-  const next = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
+  const next = encodeURIComponent(getPathWithoutToken());
   window.location.href = `./login.php?next=${next}`;
 }
 
@@ -79,7 +101,7 @@ function handleUnauthorized(resp) {
 
 async function refreshServerStats() {
   try {
-    const resp = await fetch("./api/stats.php", { cache: "no-store" });
+    const resp = await fetch("./api/stats.php", { headers: authHeaders(), cache: "no-store" });
     if (handleUnauthorized(resp)) return;
     const data = await resp.json().catch(() => ({}));
     if (resp.ok && data?.ok === true) {
@@ -98,7 +120,7 @@ async function resetAllChecked() {
   try {
     const resp = await fetch("./api/reset_all.php", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: authHeaders({ "content-type": "application/json" }),
       body: "{}",
       cache: "no-store",
     });
@@ -135,7 +157,7 @@ async function uncheckTicket(no) {
   try {
     const resp = await fetch("./api/uncheck.php", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: authHeaders({ "content-type": "application/json" }),
       body: JSON.stringify({ no }),
       cache: "no-store",
     });
@@ -181,21 +203,14 @@ async function decodeImageFile(jsQR, file) {
   if (!file.type?.startsWith("image/")) throw new Error("请选择图片文件");
 
   const { canvas, ctx } = ensureScanCanvas();
+  let source = null;
+  let cleanup = () => { };
 
-  const drawToCanvas = async () => {
-    if ("createImageBitmap" in window) {
-      const bitmap = await createImageBitmap(file);
-      const vw = bitmap.width || 0;
-      const vh = bitmap.height || 0;
-      if (vw <= 0 || vh <= 0) throw new Error("图片尺寸无效");
-      const { w, h } = computeScaledSize(vw, vh);
-      canvas.width = w;
-      canvas.height = h;
-      ctx.drawImage(bitmap, 0, 0, w, h);
-      bitmap.close?.();
-      return { w, h };
-    }
-
+  if ("createImageBitmap" in window) {
+    const bitmap = await createImageBitmap(file);
+    source = bitmap;
+    cleanup = () => bitmap.close?.();
+  } else {
     const url = URL.createObjectURL(file);
     try {
       const img = new Image();
@@ -205,23 +220,41 @@ async function decodeImageFile(jsQR, file) {
         img.onerror = () => reject(new Error("图片加载失败"));
         img.src = url;
       });
-      const vw = img.naturalWidth || img.width || 0;
-      const vh = img.naturalHeight || img.height || 0;
-      if (vw <= 0 || vh <= 0) throw new Error("图片尺寸无效");
-      const { w, h } = computeScaledSize(vw, vh);
+      source = img;
+      cleanup = () => URL.revokeObjectURL(url);
+    } catch (e) {
+      URL.revokeObjectURL(url);
+      throw e;
+    }
+  }
+
+  try {
+    const vw = source.naturalWidth || source.videoWidth || source.width || 0;
+    const vh = source.naturalHeight || source.videoHeight || source.height || 0;
+    if (vw <= 0 || vh <= 0) throw new Error("图片尺寸无效");
+
+    const attempts = [];
+    const pushAttempt = (maxW) => {
+      const { w, h } = computeScaledSize(vw, vh, maxW);
+      if (!attempts.some((a) => a.w === w && a.h === h)) attempts.push({ w, h });
+    };
+    pushAttempt(UPLOAD_MAX_WIDTH);
+    pushAttempt(Math.min(vw, 3200));
+    pushAttempt(vw);
+
+    for (const { w, h } of attempts) {
       canvas.width = w;
       canvas.height = h;
-      ctx.drawImage(img, 0, 0, w, h);
-      return { w, h };
-    } finally {
-      URL.revokeObjectURL(url);
+      ctx.drawImage(source, 0, 0, w, h);
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const code = jsQR(imageData.data, w, h, { inversionAttempts: "attemptBoth" });
+      if (code?.data) return code.data;
     }
-  };
 
-  const { w, h } = await drawToCanvas();
-  const imageData = ctx.getImageData(0, 0, w, h);
-  const code = jsQR(imageData.data, w, h, { inversionAttempts: "attemptBoth" });
-  return code?.data || null;
+    return null;
+  } finally {
+    cleanup();
+  }
 }
 
 function ensureScanCanvas() {
@@ -233,8 +266,8 @@ function ensureScanCanvas() {
   return { canvas: scanCanvas, ctx: scanCtx };
 }
 
-function computeScaledSize(vw, vh) {
-  const targetW = Math.min(SCAN_MAX_WIDTH, vw);
+function computeScaledSize(vw, vh, maxWidth = SCAN_MAX_WIDTH) {
+  const targetW = Math.min(maxWidth, vw);
   const scale = targetW / vw;
   const w = Math.max(1, Math.round(vw * scale));
   const h = Math.max(1, Math.round(vh * scale));
@@ -267,7 +300,7 @@ async function handleDetected(rawValue) {
     // Always send raw QR content to server to parse/verify/update CSV.
     const resp = await fetch("./api/verify.php", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: authHeaders({ "content-type": "application/json" }),
       body: JSON.stringify({ raw: rawValue }),
       cache: "no-store",
     });
@@ -461,18 +494,24 @@ async function pickPhotoAndVerify() {
   }
 }
 
-setEntryState("idle");
-if (els.checkedCount) els.checkedCount.textContent = "0";
+clearTokenInAddressBar();
 
-els.startBtn.addEventListener("click", start);
-els.stopBtn.addEventListener("click", stop);
-els.photoBtn?.addEventListener("click", pickPhotoAndVerify);
-els.resetAllBtn?.addEventListener("click", resetAllChecked);
-els.entryState?.addEventListener("click", () => {
-  const isAlready = els.entryState?.classList?.contains("state-already");
-  if (!isAlready) return;
-  if (!lastTicketNo) return;
-  uncheckTicket(lastTicketNo);
-});
+if (!API_TOKEN) {
+  redirectToLogin();
+} else {
+  setEntryState("idle");
+  if (els.checkedCount) els.checkedCount.textContent = "0";
 
-refreshServerStats();
+  els.startBtn.addEventListener("click", start);
+  els.stopBtn.addEventListener("click", stop);
+  els.photoBtn?.addEventListener("click", pickPhotoAndVerify);
+  els.resetAllBtn?.addEventListener("click", resetAllChecked);
+  els.entryState?.addEventListener("click", () => {
+    const isAlready = els.entryState?.classList?.contains("state-already");
+    if (!isAlready) return;
+    if (!lastTicketNo) return;
+    uncheckTicket(lastTicketNo);
+  });
+
+  refreshServerStats();
+}

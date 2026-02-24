@@ -1,7 +1,7 @@
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-SEND_EMAIL = True
+SEND_EMAIL = False
 
 # Template
 TEMPLATE_PATH = BASE_DIR / "Ticketing" / "Assets" / "template.png"
@@ -10,6 +10,7 @@ TEMPLATE_PATH = BASE_DIR / "Ticketing" / "Assets" / "template.png"
 TICKETS_DIR = BASE_DIR / "Ticketing" / "Tickets"
 PRIVATE_KEY_PATH = BASE_DIR / "Ticketing" / "private.key"
 SCHEMA_SQL_PATH = BASE_DIR / "Ticketing" / "schema.mysql.sql"
+LIST_PATH = BASE_DIR / "Ticketing" / "list.csv"
 
 # Ticket settings
 NO_PREFIX = "CYP"
@@ -18,7 +19,7 @@ NO_PREFIX = "CYP"
 TICKET_INFO_WIDTH = 750
 TICKET_INFO_HEIGHT = 300
 TICKET_INFO_X = 1657
-TICKET_INFO_Y = 526
+TICKET_INFO_Y = 520
 
 # Info
 INFO_LABEL_FONT_PATH = BASE_DIR / "Ticketing" / "Assets" / "UDDigiKyokashoN-R.ttc"
@@ -35,3 +36,6 @@ QR_BOX_SIZE = 12
 QR_BORDER = 2
 QR_X = TICKET_INFO_X + TICKET_INFO_WIDTH - QR_SIZE
 QR_Y = TICKET_INFO_Y + (TICKET_INFO_HEIGHT - QR_SIZE) // 2
+
+# Batch settings
+COOLDOWN_SECONDS = 2.0
